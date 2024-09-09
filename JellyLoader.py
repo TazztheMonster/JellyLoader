@@ -30,7 +30,7 @@ total_progress = 100  # Placeholder for number of episodes
 current_download_info = {'show_name': '', 'season': '', 'episode': ''}
 
 # Zeitrahmen für erlaubte Downloads
-START_HOUR = 23  # Startzeit (z.B. 02:00 Uhr)
+START_HOUR = 2  # Startzeit (z.B. 02:00 Uhr)
 END_HOUR = 5  # Endzeit (z.B. 05:00 Uhr)
 
 API_TOKEN = "1a2b3c4d5e6f7g8h9i0j"
