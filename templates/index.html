@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Jellyfin Downloader</title>
+    <link rel="stylesheet" href="/static/styles.css">
+    <script>
+        function startDownload() {
+            const jellyfinUrl = document.getElementById('jellyfin_url').value;
+            const selectedSubdirectory = document.getElementById('selected_subdirectory').value;
+
+            fetch('/start_download', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/x-www-form-urlencoded'},
+                body: `jellyfin_url=${encodeURIComponent(jellyfinUrl)}&selected_subdirectory=${encodeURIComponent(selectedSubdirectory)}`
+            }).then(response => response.json()).then(data => {
+                document.getElementById('status').textContent = `${data.status} - Downloading to: ${data.directory}`;
+                updateProgress();
+            });
+        }
+
+        function pauseDownload() {
+            fetch('/pause_download', {method: 'POST'}).then(response => response.json()).then(data => {
+                document.getElementById('status').textContent = data.status;
+            });
+        }
+
+        function resumeDownload() {
+            fetch('/resume_download', {method: 'POST'}).then(response => response.json()).then(data => {
+                document.getElementById('status').textContent = data.status;
+            });
+        }
+
+        function abortDownload() {
+            fetch('/abort_download', {method: 'POST'}).then(response => response.json()).then(data => {
+                document.getElementById('status').textContent = data.status;
+            });
+        }
+
+        function updateProgress() {
+            fetch('/progress').then(response => response.json()).then(data => {
+                const progressText = `Progress: ${data.current}/${data.total} - Show: ${data.download_info.show_name}, ${data.download_info.season}, Episode: ${data.download_info.episode}`;
+                const fileProgressText = `Current file progress: ${Math.round(data.file_progress)}%`;
+
+                // Update progress text
+                document.getElementById('progress').textContent = progressText;
+                document.getElementById('file_progress_text').textContent = fileProgressText;
+
+                // Update progress bar
+                const progressBar = document.getElementById('progress_bar');
+                progressBar.style.width = data.file_progress + '%';
+                
+                if (data.status.active) {
+                    setTimeout(updateProgress, 1000);
+                }
+            });
+        }
+
+        window.onload = function() {
+            updateProgress();  // Check if there's an active download when the page loads
+        }
+    </script>
+</head>
+<body>
+    <div class="container">
+        <h1>Jellyfin Downloader</h1>
+        <label for="jellyfin_url">Jellyfin Link:</label>
+        <input type="text" id="jellyfin_url" class="input"><br><br>
+        <label for="selected_subdirectory">Select Directory:</label>
+        <select id="selected_subdirectory" class="input">
+            {% for subdir in subdirectories %}
+            <option value="{{ subdir }}">{{ subdir }}</option>
+            {% endfor %}
+        </select><br><br>
+        <div class="button-container">
+            <button class="button" onclick="startDownload()">Start Download</button>
+            <button class="button" onclick="pauseDownload()">Pause Download</button>
+            <button class="button" onclick="resumeDownload()">Resume Download</button>
+            <button class="button" onclick="abortDownload()">Abort Download</button>
+        </div>
+        <p id="status"></p>
+        <p id="progress"></p>
+
+        <!-- Fortschritt des aktuellen Dateidownloads -->
+        <p id="file_progress_text">Current file progress: 0%</p>
+        <div class="progress-container">
+            <div class="progress-bar" id="progress_bar"></div>
+        </div>
+    </div>
+</body>
+</html>
